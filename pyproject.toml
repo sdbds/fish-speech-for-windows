@@ -44,6 +44,9 @@ dependencies = [
     "opencc-python-reimplemented==0.1.7",
     "silero-vad",
     "ormsgpack",
+    "livekit",
+    "livekit-agents",
+    "cachetools",
 ]
 
 [project.optional-dependencies]
