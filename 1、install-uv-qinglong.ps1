@@ -75,7 +75,7 @@ Check "torch ??װʧ?ܡ?"
 
 huggingface-cli download fishaudio/fish-speech-1.4 --local-dir checkpoints/fish-speech-1.4
 
-huggingface-cli download fishaudio/fish-agent-v0.1-3b --local-dir checkpoints/fish-agent-3b-pretrain
+huggingface-cli download fishaudio/fish-agent-v0.1-3b --local-dir checkpoints/fish-agent-v0.1-3b
 
 Write-Output "??װ???"
 Read-Host | Out-Null ;

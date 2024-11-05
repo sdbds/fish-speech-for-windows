@@ -26,9 +26,7 @@ $Env:HF_ENDPOINT = "https://hf-mirror.com"
 $ext_args = [System.Collections.ArrayList]::new()
 
 # run train
-python -m tools.api --llama-checkpoint-path checkpoints/fish-agent-3b-pretrain --mode agent --compile
-
-python -m tools.e2e_webui
+python -m tools.api --llama-checkpoint-path checkpoints/fish-agent-v0.1-3b --mode agent --compile
 
 Write-Output "Tagger finished"
 Read-Host | Out-Null ;
