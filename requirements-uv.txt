@@ -496,7 +496,7 @@ tqdm==4.66.6
     #   umap-learn
 transformers==4.46.1
     # via fish-speech (pyproject.toml)
-triton @ https://github.com/woct0rdho/triton-windows/releases/download/v3.1.0-windows.post5/triton-3.1.0-cp310-cp310-win_amd64.whl
+triton @ https://mirror.ghproxy.com/https://github.com/woct0rdho/triton-windows/releases/download/v3.1.0-windows.post5/triton-3.1.0-cp310-cp310-win_amd64.whl
     # via fish-speech (pyproject.toml)
 typer==0.12.5
     # via gradio
