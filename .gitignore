@@ -31,4 +31,3 @@ asr-label*
 /faster_whisper
 /.gradio
 huggingface/
-main.*

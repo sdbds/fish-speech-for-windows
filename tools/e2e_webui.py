@@ -219,4 +219,4 @@ def create_demo():
 
 if __name__ == "__main__":
     demo = create_demo()
-    demo.launch(server_name="127.0.0.1", share=True)
+    demo.launch(server_name="127.0.0.1", inbrowser=True)
