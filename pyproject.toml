@@ -46,12 +46,15 @@ dependencies = [
     "ormsgpack",
     "cachetools",
     "triton @ https://github.com/woct0rdho/triton-windows/releases/download/v3.1.0-windows.post5/triton-3.1.0-cp310-cp310-win_amd64.whl",
+    "tiktoken>=0.8.0",
+    "pydantic==2.9.2",
 ]
 
 [project.optional-dependencies]
 stable = [
     "torch<=2.4.1",
     "torchaudio",
+    "cachetools",
 ]
 
 [build-system]
