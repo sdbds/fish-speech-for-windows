@@ -27,7 +27,7 @@ function Check {
 }
 
 try {
-    ~/.cargo/bin/uv --version
+    ~/.local/bin/uv --version
     Write-Output "uv installed|UV模块已安装."
 }
 catch {
@@ -52,7 +52,7 @@ if ($env:OS -ilike "*windows*") {
         . ./.venv/Scripts/activate
     }else{
         Write-Output "Create .venv"
-        ~/.cargo/bin/uv.exe venv -p 3.10
+        ~/.local/bin/uv.exe venv -p 3.10
         . ./.venv/Scripts/activate
     }
 }
@@ -66,16 +66,16 @@ elseif (Test-Path "./.venv/bin/activate") {
 }
 else{
     Write-Output "Create .venv"
-    ~/.cargo/bin/uv venv -p 3.10
+    ~/.local/bin/uv venv -p 3.10
     . ./.venv/bin/activate.ps1
 }
 
 Write-Output "安装程序所需依赖 (已进行国内加速，若在国外或无法使用加速源请换用 install.ps1 脚本)"
 
-~/.cargo/bin/uv pip sync requirements-uv.txt --index-strategy unsafe-best-match
+~/.local/bin/uv pip sync requirements-uv.txt --index-strategy unsafe-best-match
 Check "环境安装失败。"
 
-huggingface-cli download fishaudio/fish-speech-1.4 --local-dir checkpoints/fish-speech-1.4
+huggingface-cli download fishaudio/fish-speech-1.5 --local-dir checkpoints/fish-speech-1.5
 
 huggingface-cli download fishaudio/fish-agent-v0.1-3b --local-dir checkpoints/fish-agent-v0.1-3b
 

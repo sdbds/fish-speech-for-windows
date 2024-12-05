@@ -6,15 +6,17 @@
 <#
 .SYNOPSIS
 
-The installer for uv 0.4.29
+The installer for uv 0.5.6
 
 .DESCRIPTION
 
 This script detects what platform you're on and fetches an appropriate archive from
-https://github.com/astral-sh/uv/releases/download/0.4.29
-then unpacks the binaries and installs them to
+https://github.com/astral-sh/uv/releases/download/0.5.6
+then unpacks the binaries and installs them to the first of the following locations
 
-    $env:CARGO_HOME/bin (or $HOME/.cargo/bin)
+    $env:XDG_BIN_HOME
+    $env:XDG_DATA_HOME/../bin
+    $HOME/.local/bin
 
 It will then add that dir to PATH by editing your Environment.Path registry key
 
@@ -31,7 +33,7 @@ Print help
 
 param (
     [Parameter(HelpMessage = "The URL of the directory where artifacts can be fetched from")]
-    [string]$ArtifactDownloadUrl = 'https://mirror.ghproxy.com/https://github.com/astral-sh/uv/releases/download/0.4.29',
+    [string]$ArtifactDownloadUrl = 'https://mirror.ghproxy.com/https://github.com/astral-sh/uv/releases/download/0.5.6',
     [Parameter(HelpMessage = "Don't add the install directory to PATH")]
     [switch]$NoModifyPath,
     [Parameter(HelpMessage = "Print Help")]
@@ -39,10 +41,22 @@ param (
 )
 
 $app_name = 'uv'
-$app_version = '0.4.29'
+$app_version = '0.5.6'
+if ($env:UV_INSTALLER_GHE_BASE_URL) {
+  $installer_base_url = $env:UV_INSTALLER_GHE_BASE_URL
+} elseif ($env:UV_INSTALLER_GITHUB_BASE_URL) {
+  $installer_base_url = $env:UV_INSTALLER_GITHUB_BASE_URL
+} else {
+  $installer_base_url = "https://github.com"
+}
+if ($env:INSTALLER_DOWNLOAD_URL) {
+  $ArtifactDownloadUrl = $env:INSTALLER_DOWNLOAD_URL
+} else {
+  $ArtifactDownloadUrl = "$installer_base_url/astral-sh/uv/releases/download/0.5.6"
+}
 
 $receipt = @"
-{"binaries":["CARGO_DIST_BINS"],"binary_aliases":{},"cdylibs":["CARGO_DIST_DYLIBS"],"cstaticlibs":["CARGO_DIST_STATICLIBS"],"install_layout":"unspecified","install_prefix":"AXO_INSTALL_PREFIX","modify_path":true,"provider":{"source":"cargo-dist","version":"0.23.0"},"source":{"app_name":"uv","name":"uv","owner":"astral-sh","release_type":"github"},"version":"0.4.29"}
+{"binaries":["CARGO_DIST_BINS"],"binary_aliases":{},"cdylibs":["CARGO_DIST_DYLIBS"],"cstaticlibs":["CARGO_DIST_STATICLIBS"],"install_layout":"unspecified","install_prefix":"AXO_INSTALL_PREFIX","modify_path":true,"provider":{"source":"cargo-dist","version":"0.25.2-prerelease.3"},"source":{"app_name":"uv","name":"uv","owner":"astral-sh","release_type":"github"},"version":"0.5.6"}
 "@
 $receipt_home = "${env:LOCALAPPDATA}\uv"
 
@@ -75,7 +89,7 @@ function Install-Binary($install_args) {
 
   Initialize-Environment
 
-  # Platform info injected by cargo-dist
+  # Platform info injected by dist
   $platforms = @{
     "aarch64-pc-windows-msvc" = @{
       "artifact_name" = "uv-x86_64-pc-windows-msvc.zip"
@@ -258,13 +272,29 @@ function Invoke-Installer($artifacts, $platforms) {
   # to the older generic one
   if (($env:UV_INSTALL_DIR)) {
     $force_install_dir = $env:UV_INSTALL_DIR
-    $install_layout = "cargo-home"
+    $install_layout = "flat"
   } elseif (($env:CARGO_DIST_FORCE_INSTALL_DIR)) {
     $force_install_dir = $env:CARGO_DIST_FORCE_INSTALL_DIR
-    $install_layout = "cargo-home"
+    $install_layout = "flat"
   } elseif ($unmanaged_install) {
     $force_install_dir = $unmanaged_install
     $install_layout = "flat"
+  }
+
+  # Check if the install layout should be changed from `flat` to `cargo-home`
+  # for backwards compatible updates of applications that switched layouts.
+  if (($force_install_dir) -and ($install_layout -eq "flat")) {
+    # If the install directory is targeting the Cargo home directory, then
+    # we assume this application was previously installed that layout
+    # Note the installer passes the path with `\\` separators, but here they are
+    # `\` so we normalize for comparison. We don't use `Resolve-Path` because they
+    # may not exist.
+    $cargo_home = if ($env:CARGO_HOME) { $env:CARGO_HOME } else {
+        Join-Path $(if ($HOME) { $HOME } else { "." }) ".cargo"
+    }
+    if ($force_install_dir.Replace('\\', '\') -eq $cargo_home) {
+      $install_layout = "cargo-home"
+    }
   }
 
   # The actual path we're going to install to
@@ -298,20 +328,31 @@ function Invoke-Installer($artifacts, $platforms) {
     $receipt_dest_dir = $force_install_dir
   }
   if (-Not $dest_dir) {
-    # first try $env:CARGO_HOME, then fallback to $HOME
-    # (for whatever reason $HOME is not a normal env var and doesn't need the $env: prefix)
-    $root = if (($base_dir = $env:CARGO_HOME)) {
-      $base_dir
-    } elseif (($base_dir = $HOME)) {
-      Join-Path $base_dir ".cargo"
-    } else {
-      throw "ERROR: could not find your HOME dir or CARGO_HOME to install binaries to"
+    # Install to $env:XDG_BIN_HOME
+    $dest_dir = if (($base_dir = $env:XDG_BIN_HOME)) {
+      Join-Path $base_dir ""
     }
-
-    $dest_dir = Join-Path $root "bin"
     $dest_dir_lib = $dest_dir
-    $receipt_dest_dir = $root
-    $install_layout = "cargo-home"
+    $receipt_dest_dir = $dest_dir
+    $install_layout = "flat"
+  }
+  if (-Not $dest_dir) {
+    # Install to $env:XDG_DATA_HOME/../bin
+    $dest_dir = if (($base_dir = $env:XDG_DATA_HOME)) {
+      Join-Path $base_dir "../bin"
+    }
+    $dest_dir_lib = $dest_dir
+    $receipt_dest_dir = $dest_dir
+    $install_layout = "flat"
+  }
+  if (-Not $dest_dir) {
+    # Install to $HOME/.local/bin
+    $dest_dir = if (($base_dir = $HOME)) {
+      Join-Path $base_dir ".local/bin"
+    }
+    $dest_dir_lib = $dest_dir
+    $receipt_dest_dir = $dest_dir
+    $install_layout = "flat"
   }
 
   # Looks like all of the above assignments failed
