@@ -30,7 +30,6 @@ dependencies = [
     "uvicorn>=0.30.0",
     "loguru>=0.6.0",
     "loralib>=0.1.2",
-    "natsort>=8.4.0",
     "pyrootutils>=1.0.4",
     "vector_quantize_pytorch==1.14.24",
     "resampy>=0.4.3",
@@ -48,13 +47,13 @@ dependencies = [
     "triton @ https://github.com/woct0rdho/triton-windows/releases/download/v3.1.0-windows.post5/triton-3.1.0-cp310-cp310-win_amd64.whl",
     "tiktoken>=0.8.0",
     "pydantic==2.9.2",
+    "cachetools",
 ]
 
 [project.optional-dependencies]
 stable = [
     "torch<=2.4.1",
     "torchaudio",
-    "cachetools",
 ]
 
 [build-system]
